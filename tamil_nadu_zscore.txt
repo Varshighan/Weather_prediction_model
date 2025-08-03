@@ -1,0 +1,216 @@
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Ariyalur.csv
+rain (mm)                   173
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        0
+temperature_2m (°C)          28
+wind_speed_100m (km/h)       17
+wind_speed_10m (km/h)        25
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Chengalpattu.csv
+rain (mm)                   102
+relative_humidity_2m (%)      1
+surface_pressure (hPa)        0
+temperature_2m (°C)          39
+wind_speed_100m (km/h)       55
+wind_speed_10m (km/h)        52
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Chennai.csv
+rain (mm)                   120
+relative_humidity_2m (%)      7
+surface_pressure (hPa)        0
+temperature_2m (°C)          33
+wind_speed_100m (km/h)       31
+wind_speed_10m (km/h)        44
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Coimbatore.csv
+rain (mm)                   151
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        8
+temperature_2m (°C)          91
+wind_speed_100m (km/h)        3
+wind_speed_10m (km/h)        25
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Cuddalore.csv
+rain (mm)                   149
+relative_humidity_2m (%)     20
+surface_pressure (hPa)        6
+temperature_2m (°C)          16
+wind_speed_100m (km/h)       64
+wind_speed_10m (km/h)        51
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Dindigul.csv
+rain (mm)                   157
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        2
+temperature_2m (°C)          26
+wind_speed_100m (km/h)       77
+wind_speed_10m (km/h)       111
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Gummidipoondi.csv
+rain (mm)                   130
+relative_humidity_2m (%)      6
+surface_pressure (hPa)        0
+temperature_2m (°C)          52
+wind_speed_100m (km/h)       55
+wind_speed_10m (km/h)        53
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Hosur.csv
+rain (mm)                   147
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        3
+temperature_2m (°C)          36
+wind_speed_100m (km/h)       34
+wind_speed_10m (km/h)        42
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Kanchipuram.csv
+rain (mm)                   129
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        0
+temperature_2m (°C)          45
+wind_speed_100m (km/h)       43
+wind_speed_10m (km/h)        60
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Karur.csv
+rain (mm)                   152
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        0
+temperature_2m (°C)          29
+wind_speed_100m (km/h)        4
+wind_speed_10m (km/h)        34
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Madurai.csv
+rain (mm)                   153
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        0
+temperature_2m (°C)          26
+wind_speed_100m (km/h)       41
+wind_speed_10m (km/h)        81
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Nagapattinam.csv
+rain (mm)                   151
+relative_humidity_2m (%)     29
+surface_pressure (hPa)        0
+temperature_2m (°C)          70
+wind_speed_100m (km/h)       33
+wind_speed_10m (km/h)        25
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Ooty.csv
+rain (mm)                   151
+relative_humidity_2m (%)     10
+surface_pressure (hPa)        6
+temperature_2m (°C)          19
+wind_speed_100m (km/h)      208
+wind_speed_10m (km/h)       171
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Perundurai.csv
+rain (mm)                   165
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        5
+temperature_2m (°C)          26
+wind_speed_100m (km/h)        8
+wind_speed_10m (km/h)        22
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Pudukottai.csv
+rain (mm)                   140
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        0
+temperature_2m (°C)          27
+wind_speed_100m (km/h)       59
+wind_speed_10m (km/h)        89
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Ramanathapuram.csv
+rain (mm)                   150
+relative_humidity_2m (%)      9
+surface_pressure (hPa)        0
+temperature_2m (°C)          17
+wind_speed_100m (km/h)        2
+wind_speed_10m (km/h)         3
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Ranipet.csv
+rain (mm)                   132
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        0
+temperature_2m (°C)          31
+wind_speed_100m (km/h)       46
+wind_speed_10m (km/h)        72
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Salem.csv
+rain (mm)                   136
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        2
+temperature_2m (°C)          28
+wind_speed_100m (km/h)       45
+wind_speed_10m (km/h)        47
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Thanjavur.csv
+rain (mm)                   124
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        0
+temperature_2m (°C)          15
+wind_speed_100m (km/h)       31
+wind_speed_10m (km/h)        48
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Thoothukudi.csv
+rain (mm)                   153
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        1
+temperature_2m (°C)           1
+wind_speed_100m (km/h)        7
+wind_speed_10m (km/h)        22
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Tiruchirappalli.csv
+rain (mm)                   157
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        0
+temperature_2m (°C)          26
+wind_speed_100m (km/h)       43
+wind_speed_10m (km/h)        65
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Tirunelveli.csv
+rain (mm)                   144
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        1
+temperature_2m (°C)          42
+wind_speed_100m (km/h)        7
+wind_speed_10m (km/h)        13
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Tirupur.csv
+rain (mm)                   149
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        7
+temperature_2m (°C)          39
+wind_speed_100m (km/h)        3
+wind_speed_10m (km/h)        31
+dtype: int64
+
+Z-Score Outlier Check for: Dataset/Tamil Nadu/Metrological Data\Vellore.csv
+rain (mm)                   163
+relative_humidity_2m (%)      0
+surface_pressure (hPa)        0
+temperature_2m (°C)          17
+wind_speed_100m (km/h)       39
+wind_speed_10m (km/h)        57
+dtype: int64
