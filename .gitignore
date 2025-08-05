@@ -1,1 +1,54 @@
-IndianRepo.zip
+# 1. Virtual environment
+venv/
+env/
+.venv/
+.ENV/
+virt/
+__pycache__/
+
+# 2. System files
+.DS_Store
+Thumbs.db
+
+# 3. IPython + Jupyter
+.ipynb_checkpoints/
+*.pyc
+*.pyo
+*.pyd
+
+# 4. Model weights or output artifacts (optional)
+*.h5
+*.hdf5
+*.pkl
+*.joblib
+*.sav
+*.pt
+*.onnx
+
+# 5. Dataset folders
+Dataset/
+Dataset_cleaned/
+# weather_global_dataset.csv
+
+# 6. Logs, cache
+logs/
+*.log
+*.tmp
+*.cache/
+*.tensorboard/
+wandb/
+
+# 7. Secrets/configs (if any)
+.env
+*.key
+*.pem
+*.cfg
+config.json
+token.json
+
+# 8. Large output files
+*.pdf
+*.xlsx
+*.csv
+output/
+results/
