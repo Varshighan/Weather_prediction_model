@@ -1,6 +1,6 @@
 // src/WeatherDashboard.js
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, RadialBarChart, RadialBar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Cloud, CloudRain, Sun, Thermometer, MapPin, Download, Bell, TrendingUp, Calendar, Users, Droplets, Wind, Eye, AlertTriangle, Activity, Zap, Layers, Settings, Sparkles, Brain, Satellite, TreePine } from 'lucide-react';
 import './Dashboard.css';
 
@@ -12,26 +12,141 @@ const WeatherDashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [animationPhase, setAnimationPhase] = useState(0);
+  
+  // API State
+  const [forecastData, setForecastData] = useState([]);
+  const [advisoryData, setAdvisoryData] = useState([]);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [currentWeather, setCurrentWeather] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const districts = ['Chennai', 'Coimbatore', 'Madurai', 'Salem', 'Tiruchirappalli', 'Vellore', 'Tirunelveli'];
+  const API_BASE_URL = 'http://localhost:5000/api';
 
-  const forecastData = [
-    { date: 'Today', day: 'Mon', rainfall: 15, minTemp: 24, maxTemp: 32, humidity: 75, windSpeed: 12, pressure: 1013, uv: 8, cloudCover: 65 },
-    { date: 'Tomorrow', day: 'Tue', rainfall: 8, minTemp: 25, maxTemp: 33, humidity: 70, windSpeed: 10, pressure: 1015, uv: 9, cloudCover: 40 },
-    { date: 'Wed', day: 'Wed', rainfall: 22, minTemp: 23, maxTemp: 30, humidity: 85, windSpeed: 15, pressure: 1010, uv: 6, cloudCover: 90 },
-    { date: 'Thu', day: 'Thu', rainfall: 5, minTemp: 26, maxTemp: 34, humidity: 65, windSpeed: 8, pressure: 1018, uv: 10, cloudCover: 25 },
-    { date: 'Fri', day: 'Fri', rainfall: 18, minTemp: 24, maxTemp: 31, humidity: 80, windSpeed: 12, pressure: 1012, uv: 7, cloudCover: 70 },
-    { date: 'Sat', day: 'Sat', rainfall: 12, minTemp: 25, maxTemp: 33, humidity: 72, windSpeed: 11, pressure: 1016, uv: 8, cloudCover: 55 },
-    { date: 'Sun', day: 'Sun', rainfall: 28, minTemp: 22, maxTemp: 29, humidity: 90, windSpeed: 18, pressure: 1008, uv: 5, cloudCover: 95 },
-  ];
+  // Fetch forecast data from API
+  const fetchForecastData = async (district, days) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch(
+        `${API_BASE_URL}/weather/forecast?district=${encodeURIComponent(district)}&days=${days}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Transform API response to UI format
+      const transformedForecast = data.forecast.map((day) => ({
+        date: day.day_name.substr(0, 3), // Mon, Tue, etc.
+        day: day.day_name,
+        rainfall: Math.round(day.rainfall * 10) / 10,
+        minTemp: Math.round(day.temperature_min),
+        maxTemp: Math.round(day.temperature_max),
+        humidity: day.humidity,
+        windSpeed: day.wind_speed,
+        pressure: day.pressure,
+        uv: day.uv_index,
+        cloudCover: day.cloud_cover,
+        confidence: day.confidence
+      }));
+      
+      setForecastData(transformedForecast);
+    } catch (err) {
+      console.error('Error fetching forecast:', err);
+      setError('Failed to fetch forecast data. Make sure the API server is running on port 5000.');
+      // Set fallback data
+      setForecastData([
+        { date: 'Mon', day: 'Monday', rainfall: 15, minTemp: 24, maxTemp: 32, humidity: 75, windSpeed: 12, pressure: 1013, uv: 8, cloudCover: 65, confidence: 92 },
+        { date: 'Tue', day: 'Tuesday', rainfall: 8, minTemp: 25, maxTemp: 33, humidity: 70, windSpeed: 10, pressure: 1015, uv: 9, cloudCover: 40, confidence: 88 },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const advisoryData = [
-    { crop: 'Rice', advisory: 'Avoid irrigation for next 2 days due to expected rainfall', priority: 'high', icon: '🌾', impact: 'High yield protection', confidence: 94 },
-    { crop: 'Cotton', advisory: 'Apply nitrogen fertilizer before rainfall', priority: 'medium', icon: '🌱', impact: 'Moderate growth boost', confidence: 87 },
-    { crop: 'Sugarcane', advisory: 'Monitor for pest activity post rainfall', priority: 'low', icon: '🎋', impact: 'Preventive care', confidence: 91 },
-    { crop: 'Wheat', advisory: 'Harvest ready crops before heavy rain', priority: 'high', icon: '🌾', impact: 'Critical harvest timing', confidence: 96 },
-  ];
+  // Fetch current weather from API
+  const fetchCurrentWeather = async (district) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/weather/current?district=${encodeURIComponent(district)}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setCurrentWeather(data.current);
+    } catch (err) {
+      console.error('Error fetching current weather:', err);
+    }
+  };
 
+  // Fetch advisory data from API
+  const fetchAdvisoryData = async (district) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/weather/advisory?district=${encodeURIComponent(district)}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Transform API response to UI format with icons
+      const cropIcons = {
+        'Rice': '🌾',
+        'Cotton': '🌱',
+        'Sugarcane': '🎋',
+        'Wheat': '🌾'
+      };
+      
+      const transformedAdvisories = data.advisories.map((adv) => ({
+        ...adv,
+        icon: cropIcons[adv.crop] || '🌿'
+      }));
+      
+      setAdvisoryData(transformedAdvisories);
+    } catch (err) {
+      console.error('Error fetching advisory:', err);
+    }
+  };
+
+  // Fetch analytics data from API
+  const fetchAnalyticsData = async (district) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/weather/analytics?district=${encodeURIComponent(district)}&days=${forecastDays}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setAnalyticsData(data);
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
+    }
+  };
+
+  // Fetch all data when district or forecast days change
+  useEffect(() => {
+    fetchForecastData(selectedDistrict, forecastDays);
+    fetchCurrentWeather(selectedDistrict);
+    fetchAdvisoryData(selectedDistrict);
+    fetchAnalyticsData(selectedDistrict);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDistrict, forecastDays]);
+
+  // Clock and animation effects
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     const animationTimer = setInterval(() => setAnimationPhase(prev => (prev + 1) % 4), 3000);
@@ -47,7 +162,28 @@ const WeatherDashboard = () => {
     return <Sun className={`${size} text-amber-400 drop-shadow-lg weather-icon animate-spin`} style={{animationDuration: '8s'}} />;
   };
 
-  const getCurrentWeather = () => forecastData[0];
+  const getCurrentWeather = () => {
+    if (currentWeather) {
+      return {
+        rainfall: currentWeather.rainfall || 0,
+        minTemp: currentWeather.temperature_min || 24,
+        maxTemp: currentWeather.temperature_max || 35,
+        humidity: currentWeather.humidity || 75,
+        windSpeed: currentWeather.wind_speed || 12,
+        pressure: currentWeather.pressure || 1013,
+        confidence: currentWeather.confidence || 92
+      };
+    }
+    return {
+      rainfall: 0,
+      minTemp: 24,
+      maxTemp: 35,
+      humidity: 75,
+      windSpeed: 12,
+      pressure: 1013,
+      confidence: 92
+    };
+  };
 
   const generatePDFReport = () => {
     alert('🎉 Advanced AI Weather Report Generated! Download starting...');
@@ -171,6 +307,17 @@ const WeatherDashboard = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-500 ${themeClasses}`}>
+      {/* Error Banner */}
+      {error && (
+        <div className="fixed top-0 left-0 right-0 bg-red-500 text-white px-6 py-4 flex items-center justify-between z-50">
+          <div className="flex items-center space-x-3">
+            <AlertTriangle className="w-5 h-5" />
+            <span className="font-bold">{error}</span>
+          </div>
+          <button onClick={() => setError(null)} className="text-white hover:bg-red-600 px-3 py-1 rounded">✕</button>
+        </div>
+      )}
+      
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className={`absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 rounded-full blur-3xl animate-pulse`}></div>
         <div className={`absolute top-40 right-20 w-96 h-96 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-3xl animate-pulse`} style={{animationDelay: '2s'}}></div>
@@ -373,84 +520,103 @@ const WeatherDashboard = () => {
         </div>
         {activeTab === 'forecast' && (
           <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {forecastData.slice(0, forecastDays).map((day, index) => (
-                <ForecastCard key={index} day={day} index={index} />
-              ))}
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className={`${cardClasses} rounded-2xl p-8 border`}>
-                <h3 className={`text-2xl font-black mb-6 flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                  <Droplets className="w-7 h-7 mr-3 text-cyan-500" />
-                  Neural Rainfall Analysis
-                </h3>
-                <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart data={forecastData.slice(0, forecastDays)}>
-                    <defs>
-                      <linearGradient id="rainfallGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.1}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e2e8f0'} />
-                    <XAxis dataKey="day" stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
-                    <YAxis stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                        border: `1px solid ${isDarkMode ? '#374151' : '#e2e8f0'}`,
-                        borderRadius: '12px'
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="rainfall" 
-                      stroke="#06b6d4" 
-                      fillOpacity={1} 
-                      fill="url(#rainfallGradient)"
-                      strokeWidth={3}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+            {loading && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[...Array(forecastDays)].map((_, i) => (
+                  <div key={i} className={`${cardClasses} rounded-2xl p-6 border animate-pulse`}>
+                    <div className="h-8 bg-slate-300 dark:bg-slate-700 rounded-lg mb-4 w-3/4"></div>
+                    <div className="h-12 bg-slate-300 dark:bg-slate-700 rounded-lg mb-6"></div>
+                    <div className="space-y-3">
+                      <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded-lg"></div>
+                      <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded-lg"></div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className={`${cardClasses} rounded-2xl p-8 border`}>
-                <h3 className={`text-2xl font-black mb-6 flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                  <Thermometer className="w-7 h-7 mr-3 text-orange-500" />
-                  Temperature Dynamics
-                </h3>
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={forecastData.slice(0, forecastDays)}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e2e8f0'} />
-                    <XAxis dataKey="day" stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
-                    <YAxis stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                        border: `1px solid ${isDarkMode ? '#374151' : '#e2e8f0'}`,
-                        borderRadius: '12px'
-                      }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="maxTemp" 
-                      stroke="#f97316" 
-                      strokeWidth={4} 
-                      name="Max Temperature"
-                      dot={{ fill: '#f97316', strokeWidth: 2, r: 6 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="minTemp" 
-                      stroke="#06b6d4" 
-                      strokeWidth={4} 
-                      name="Min Temperature"
-                      dot={{ fill: '#06b6d4', strokeWidth: 2, r: 6 }}
-                    />
-                    <Legend />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            )}
+            
+            {!loading && forecastData.length > 0 && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {forecastData.slice(0, forecastDays).map((day, index) => (
+                    <ForecastCard key={index} day={day} index={index} />
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className={`${cardClasses} rounded-2xl p-8 border`}>
+                    <h3 className={`text-2xl font-black mb-6 flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                      <Droplets className="w-7 h-7 mr-3 text-cyan-500" />
+                      Neural Rainfall Analysis
+                    </h3>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <AreaChart data={forecastData.slice(0, forecastDays)}>
+                        <defs>
+                          <linearGradient id="rainfallGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e2e8f0'} />
+                        <XAxis dataKey="day" stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
+                        <YAxis stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: isDarkMode ? '#1e293b' : 'white',
+                            border: `1px solid ${isDarkMode ? '#374151' : '#e2e8f0'}`,
+                            borderRadius: '12px'
+                          }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="rainfall" 
+                          stroke="#06b6d4" 
+                          fillOpacity={1} 
+                          fill="url(#rainfallGradient)"
+                          strokeWidth={3}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className={`${cardClasses} rounded-2xl p-8 border`}>
+                    <h3 className={`text-2xl font-black mb-6 flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                      <Thermometer className="w-7 h-7 mr-3 text-orange-500" />
+                      Temperature Dynamics
+                    </h3>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <LineChart data={forecastData.slice(0, forecastDays)}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e2e8f0'} />
+                        <XAxis dataKey="day" stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
+                        <YAxis stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: isDarkMode ? '#1e293b' : 'white',
+                            border: `1px solid ${isDarkMode ? '#374151' : '#e2e8f0'}`,
+                            borderRadius: '12px'
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="maxTemp" 
+                          stroke="#f97316" 
+                          strokeWidth={4} 
+                          name="Max Temperature"
+                          dot={{ fill: '#f97316', strokeWidth: 2, r: 6 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="minTemp" 
+                          stroke="#06b6d4" 
+                          strokeWidth={4} 
+                          name="Min Temperature"
+                          dot={{ fill: '#06b6d4', strokeWidth: 2, r: 6 }}
+                        />
+                        <Legend />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
         {activeTab === 'analytics' && (
@@ -626,77 +792,94 @@ const WeatherDashboard = () => {
                   <TreePine className="w-8 h-8 mr-3 text-emerald-500" />
                   AI-Powered Crop Intelligence
                 </h3>
-                <div className="space-y-6">
-                  {advisoryData.map((advisory, index) => (
-                    <div
-                      key={index}
-                      className={`${cardClasses} border-l-4 p-6 rounded-2xl relative overflow-hidden ${
-                        advisory.priority === 'high'
-                          ? 'border-red-500 bg-gradient-to-r from-red-50/50 to-pink-50/50 dark:from-red-900/20 dark:to-pink-900/20'
-                          : advisory.priority === 'medium'
-                          ? 'border-amber-500 bg-gradient-to-r from-amber-50/50 to-orange-50/50 dark:from-amber-900/20 dark:to-orange-900/20'
-                          : 'border-emerald-500 bg-gradient-to-r from-emerald-50/50 to-green-50/50 dark:from-emerald-900/20 dark:to-green-900/20'
-                      }`}
-                    >
-                      <div className="absolute top-4 right-4 w-2 h-2 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full animate-ping"></div>
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="flex items-center space-x-4">
-                          <div className="text-5xl transform hover:scale-110 transition-transform duration-300">
-                            {advisory.icon}
-                          </div>
-                          <div>
-                            <h4 className={`text-2xl font-black mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                              {advisory.crop}
-                            </h4>
-                            <div className="flex items-center space-x-3">
-                              <span className="bg-white/70 dark:bg-slate-800/70 px-3 py-1 rounded-full text-sm font-bold text-slate-700 dark:text-slate-300">
-                                {advisory.impact}
-                              </span>
-                              <div className="flex items-center space-x-1">
-                                <Sparkles className="w-4 h-4 text-amber-500" />
-                                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
-                                  {advisory.confidence}% confidence
+                
+                {loading ? (
+                  <div className="space-y-6">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className={`${cardClasses} border-l-4 p-6 rounded-2xl animate-pulse`}>
+                        <div className="h-8 bg-slate-300 dark:bg-slate-700 rounded-lg mb-4 w-1/2"></div>
+                        <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded-lg mb-3"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {advisoryData.map((advisory, index) => (
+                      <div
+                        key={index}
+                        className={`${cardClasses} border-l-4 p-6 rounded-2xl relative overflow-hidden ${
+                          advisory.priority === 'high'
+                            ? 'border-red-500 bg-gradient-to-r from-red-50/50 to-pink-50/50 dark:from-red-900/20 dark:to-pink-900/20'
+                            : advisory.priority === 'medium'
+                            ? 'border-amber-500 bg-gradient-to-r from-amber-50/50 to-orange-50/50 dark:from-amber-900/20 dark:to-orange-900/20'
+                            : 'border-emerald-500 bg-gradient-to-r from-emerald-50/50 to-green-50/50 dark:from-emerald-900/20 dark:to-green-900/20'
+                        }`}
+                      >
+                        <div className="absolute top-4 right-4 w-2 h-2 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full animate-ping"></div>
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex items-center space-x-4">
+                            <div className="text-5xl transform hover:scale-110 transition-transform duration-300">
+                              {advisory.icon}
+                            </div>
+                            <div>
+                              <h4 className={`text-2xl font-black mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                                {advisory.crop}
+                              </h4>
+                              <div className="flex items-center space-x-3">
+                                <span className="bg-white/70 dark:bg-slate-800/70 px-3 py-1 rounded-full text-sm font-bold text-slate-700 dark:text-slate-300">
+                                  {advisory.impact}
                                 </span>
+                                <div className="flex items-center space-x-1">
+                                  <Sparkles className="w-4 h-4 text-amber-500" />
+                                  <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                                    {advisory.confidence}% confidence
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
+                          <div className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider ${
+                            advisory.priority === 'high'
+                              ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
+                              : advisory.priority === 'medium'
+                              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
+                              : 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
+                          }`}>
+                            {advisory.priority} Priority
+                          </div>
                         </div>
-                        <div className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider ${
-                          advisory.priority === 'high'
-                            ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
-                            : advisory.priority === 'medium'
-                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
-                            : 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
-                        }`}>
-                          {advisory.priority} Priority
-                        </div>
-                      </div>
-                      <p className={`text-lg leading-relaxed mb-6 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                        {advisory.advisory}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-6 text-sm">
-                          <div className="flex items-center space-x-2">
-                            <Calendar className="w-4 h-4 text-slate-500" />
-                            <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Valid for 48 hours</span>
+                        <p className={`text-lg leading-relaxed mb-6 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                          {advisory.advisory}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-6 text-sm">
+                            <div className="flex items-center space-x-2">
+                              <Calendar className="w-4 h-4 text-slate-500" />
+                              <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Valid for 48 hours</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <MapPin className="w-4 h-4 text-slate-500" />
+                              <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>{selectedDistrict} region</span>
+                            </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <MapPin className="w-4 h-4 text-slate-500" />
-                            <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>{selectedDistrict} region</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-20 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                            <div 
-                              className="bg-gradient-to-r from-emerald-400 to-cyan-400 h-2 rounded-full transition-all duration-1000"
-                              style={{ width: `${advisory.confidence}%` }}
-                            ></div>
+                            <div className="w-20 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                              <div 
+                                className="bg-gradient-to-r from-emerald-400 to-cyan-400 h-2 rounded-full transition-all duration-1000"
+                                style={{ width: `${advisory.confidence}%` }}
+                              ></div>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                    {advisoryData.length === 0 && !loading && (
+                      <div className={`${cardClasses} border rounded-2xl p-8 text-center`}>
+                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>No advisories available at the moment.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-6">
