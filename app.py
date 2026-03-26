@@ -386,6 +386,8 @@ def get_analytics():
     
     return jsonify(analytics)
 
+
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({'error': 'Endpoint not found'}), 404
@@ -395,13 +397,18 @@ def server_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    print("Starting Weather Prediction API Server...")
-    print("Available endpoints:")
-    print("  GET /api/health - Health check")
+    print("Starting Weather Prediction API Server - ML MODELS ONLY")
+    print("Available ML-based endpoints:")
+    print("  GET /api/health - Health check (models loaded: 4)")
     print("  GET /api/districts - List of districts")
-    print("  GET /api/weather/forecast?district=X&days=Y - Weather forecast")
-    print("  GET /api/weather/current?district=X - Current weather")
-    print("  GET /api/weather/advisory?district=X - Agricultural advisory")
-    print("  GET /api/weather/analytics?district=X&days=Y - Weather analytics")
+    print("  GET /api/weather/forecast?district=X&days=Y - ML predictions (Temperature, Rainfall)")
+    print("  GET /api/weather/current?district=X - Current ML prediction")
+    print("  GET /api/weather/advisory?district=X - Agricultural advisory (based on ML predictions)")
+    print("  GET /api/weather/analytics?district=X&days=Y - Weather statistics")
+    print("\nML Models Loaded:")
+    print("  1. temperature_model_lgbm.pkl - LightGBM Temperature Prediction")
+    print("  2. rainfall_model_lgbm.pkl - LightGBM Rainfall Prediction")
+    print("  3. rain_amount_model_lgbm.pkl - LightGBM Rainfall Amount Prediction")
+    print("  4. rainfall_category_model_catboost.pkl - CatBoost Rainfall Classification")
     print("\nServer running on http://localhost:5000")
     app.run(debug=True, port=5000, host='0.0.0.0')

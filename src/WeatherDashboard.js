@@ -1,7 +1,9 @@
 // src/WeatherDashboard.js
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Cloud, CloudRain, Sun, Thermometer, MapPin, Download, Bell, TrendingUp, Calendar, Users, Droplets, Wind, Eye, AlertTriangle, Activity, Zap, Layers, Settings, Sparkles, Brain, Satellite, TreePine } from 'lucide-react';
+import { Cloud, CloudRain, Sun, Thermometer, MapPin, Download, TrendingUp, Calendar, Droplets, Wind, Eye, Activity, Layers, Brain, Satellite, TreePine, AlertTriangle, Sparkles, Users, Settings, Zap } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import './Dashboard.css';
 
 
@@ -10,8 +12,6 @@ const WeatherDashboard = () => {
   const [forecastDays, setForecastDays] = useState(7);
   const [activeTab, setActiveTab] = useState('forecast');
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [animationPhase, setAnimationPhase] = useState(0);
   
   // API State
   const [forecastData, setForecastData] = useState([]);
@@ -149,10 +149,8 @@ const WeatherDashboard = () => {
   // Clock and animation effects
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    const animationTimer = setInterval(() => setAnimationPhase(prev => (prev + 1) % 4), 3000);
     return () => {
       clearInterval(timer);
-      clearInterval(animationTimer);
     };
   }, []);
 
@@ -185,25 +183,40 @@ const WeatherDashboard = () => {
     };
   };
 
-  const generatePDFReport = () => {
-    alert('🎉 Advanced AI Weather Report Generated! Download starting...');
+  const generatePDFReport = async () => {
+    try {
+      const element = document.getElementById('pdf-report');
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#0f172a',
+        scale: 2,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`weather-report-${selectedDistrict}-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
-  const sendSMSAlert = () => {
-    alert('📱 Smart Alerts dispatched to 2,847 farmers via AI optimization!');
-  };
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-  };
-
-  const themeClasses = isDarkMode 
-    ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white'
-    : 'bg-gradient-to-br from-indigo-50 via-white to-cyan-50 text-slate-900';
-
-  const cardClasses = isDarkMode
-    ? 'bg-slate-800/60 border-slate-700/50 backdrop-blur-xl'
-    : 'bg-white/60 border-white/20 backdrop-blur-xl';
+  const themeClasses = 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white';
+  const cardClasses = 'bg-slate-800/60 border-slate-700/50 backdrop-blur-xl';
 
   const MetricCard = ({ icon: Icon, title, value, unit, gradient, trend, confidence }) => (
     <div className={`${cardClasses} rounded-2xl p-6 border transition-all duration-500 hover:scale-105 hover:shadow-2xl group relative overflow-hidden`}>
@@ -221,9 +234,9 @@ const WeatherDashboard = () => {
           )}
         </div>
         <div>
-          <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm font-medium mb-1`}>{title}</p>
-          <p className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-            {value}<span className={`text-lg ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} ml-1`}>{unit}</span>
+          <p className="text-slate-400 text-sm font-medium mb-1">{title}</p>
+          <p className="text-2xl font-black text-white">
+            {value}<span className="text-lg text-slate-400 ml-1">{unit}</span>
           </p>
           {confidence && (
             <div className="mt-2 flex items-center space-x-2">
@@ -254,8 +267,8 @@ const WeatherDashboard = () => {
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className={`font-black text-lg ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{day.date}</p>
-            <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-500'} text-sm font-medium`}>{day.day}</p>
+            <p className="font-black text-lg text-white">{day.date}</p>
+            <p className="text-slate-400 text-sm font-medium">{day.day}</p>
           </div>
           <div className="relative">
             {getWeatherIcon(day.rainfall, 'w-12 h-12')}
@@ -339,28 +352,22 @@ const WeatherDashboard = () => {
                 </h1>
                 <div className="flex items-center space-x-2 mt-1">
                   <Sparkles className="w-4 h-4 text-amber-400" />
-                  <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <p className="text-sm font-bold text-slate-300">
                     AI-Powered Agricultural Intelligence Platform
                   </p>
                 </div>
               </div>
             </div>
             <div className="flex items-center space-x-6">
-              <button
-                onClick={toggleTheme}
-                className="p-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl text-white hover:scale-105 transition-transform duration-200"
-              >
-                {isDarkMode ? <Sun className="w-5 h-5" /> : <Cloud className="w-5 h-5" />}
-              </button>
               <div className={`${cardClasses} rounded-xl p-4 border text-center min-w-[140px]`}>
                 <div className="flex items-center justify-center space-x-2 mb-1">
                   <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
                   <p className="text-xs font-bold text-emerald-500">LIVE</p>
                 </div>
-                <p className={`font-black text-lg ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                <p className="font-black text-lg text-white">
                   {currentTime.toLocaleTimeString()}
                 </p>
-                <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className="text-xs text-slate-400">
                   {currentTime.toLocaleDateString()}
                 </p>
               </div>
@@ -370,21 +377,14 @@ const WeatherDashboard = () => {
                   className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-xl font-bold flex items-center space-x-2 hover:scale-105 transition-transform duration-200 shadow-lg hover:shadow-emerald-500/25"
                 >
                   <Download className="w-5 h-5" />
-                  <span>Export</span>
-                </button>
-                <button
-                  onClick={sendSMSAlert}
-                  className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold flex items-center space-x-2 hover:scale-105 transition-transform duration-200 shadow-lg hover:shadow-orange-500/25"
-                >
-                  <Bell className="w-5 h-5" />
-                  <span>Alert</span>
+                  <span>Export PDF</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
       </header>
-      <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
+      <div id="pdf-report" className="max-w-7xl mx-auto px-6 py-8 relative z-10">
         <div className={`${cardClasses} rounded-2xl p-8 mb-8 border`}>
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div className="flex items-center space-x-8">
@@ -393,7 +393,7 @@ const WeatherDashboard = () => {
                   <MapPin className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-1`}>TARGET REGION</p>
+                  <p className="text-sm font-bold text-slate-400 mb-1">TARGET REGION</p>
                   <select
                     value={selectedDistrict}
                     onChange={(e) => setSelectedDistrict(e.target.value)}
@@ -410,7 +410,7 @@ const WeatherDashboard = () => {
                   <Calendar className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-1`}>FORECAST HORIZON</p>
+                  <p className="text-sm font-bold text-slate-400 mb-1">FORECAST HORIZON</p>
                   <select
                     value={forecastDays}
                     onChange={(e) => setForecastDays(Number(e.target.value))}
@@ -435,7 +435,7 @@ const WeatherDashboard = () => {
                   className={`px-6 py-3 rounded-xl font-bold flex items-center space-x-2 transition-all duration-300 ${
                     activeTab === tab.id
                       ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg scale-105'
-                      : `${isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-white text-slate-700 hover:bg-slate-50'} hover:scale-105`
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:scale-105'
                   }`}
                 >
                   <tab.icon className="w-5 h-5" />
@@ -453,14 +453,14 @@ const WeatherDashboard = () => {
           <div className="relative z-10">
             <div className="flex justify-between items-start mb-8">
               <div>
-                <h2 className={`text-5xl font-black mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{selectedDistrict}</h2>
+                <h2 className="text-5xl font-black mb-2 text-white">{selectedDistrict}</h2>
                 <div className="flex items-center space-x-4 mb-6">
                   <div className="flex items-center space-x-2">
                     <Satellite className="w-5 h-5 text-cyan-400" />
                     <p className="text-cyan-400 font-bold">Neural Network Active</p>
                   </div>
                   <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                  <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} font-medium`}>
+                  <p className="text-slate-400 font-medium">
                     Last sync: {currentTime.toLocaleTimeString()}
                   </p>
                 </div>
@@ -469,11 +469,11 @@ const WeatherDashboard = () => {
                 <div className="mb-4 flex justify-center">
                   {getWeatherIcon(getCurrentWeather().rainfall, 'w-20 h-20')}
                 </div>
-                <p className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                <p className="text-2xl font-black text-white">
                   {getCurrentWeather().rainfall > 20 ? 'Heavy Rainfall' : 
                    getCurrentWeather().rainfall > 5 ? 'Light Showers' : 'Clear Skies'}
                 </p>
-                <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} font-medium mt-2`}>
+                <p className="text-slate-400 font-medium mt-2">
                   AI Confidence: 94.2%
                 </p>
               </div>
@@ -544,7 +544,7 @@ const WeatherDashboard = () => {
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className={`${cardClasses} rounded-2xl p-8 border`}>
-                    <h3 className={`text-2xl font-black mb-6 flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                    <h3 className="text-2xl font-black mb-6 flex items-center text-white">
                       <Droplets className="w-7 h-7 mr-3 text-cyan-500" />
                       Neural Rainfall Analysis
                     </h3>
@@ -556,13 +556,13 @@ const WeatherDashboard = () => {
                             <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.1}/>
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e2e8f0'} />
-                        <XAxis dataKey="day" stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
-                        <YAxis stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="day" stroke="#9ca3af" />
+                        <YAxis stroke="#9ca3af" />
                         <Tooltip 
                           contentStyle={{
-                            backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                            border: `1px solid ${isDarkMode ? '#374151' : '#e2e8f0'}`,
+                            backgroundColor: '#1e293b',
+                            border: '1px solid #374151',
                             borderRadius: '12px'
                           }}
                         />
@@ -578,19 +578,19 @@ const WeatherDashboard = () => {
                     </ResponsiveContainer>
                   </div>
                   <div className={`${cardClasses} rounded-2xl p-8 border`}>
-                    <h3 className={`text-2xl font-black mb-6 flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                    <h3 className="text-2xl font-black mb-6 flex items-center text-white">
                       <Thermometer className="w-7 h-7 mr-3 text-orange-500" />
                       Temperature Dynamics
                     </h3>
                     <ResponsiveContainer width="100%" height={350}>
                       <LineChart data={forecastData.slice(0, forecastDays)}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e2e8f0'} />
-                        <XAxis dataKey="day" stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
-                        <YAxis stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="day" stroke="#9ca3af" />
+                        <YAxis stroke="#9ca3af" />
                         <Tooltip 
                           contentStyle={{
-                            backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                            border: `1px solid ${isDarkMode ? '#374151' : '#e2e8f0'}`,
+                            backgroundColor: '#1e293b',
+                            border: '1px solid #374151',
                             borderRadius: '12px'
                           }}
                         />
@@ -623,7 +623,7 @@ const WeatherDashboard = () => {
           <div className="space-y-8">
             <div className={`${cardClasses} rounded-2xl p-8 border`}>
               <div className="flex items-center justify-between mb-8">
-                <h3 className={`text-3xl font-black flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className="text-3xl font-black flex items-center text-white">
                   <Brain className="w-8 h-8 mr-3 text-purple-500" />
                   Neural Network Performance
                 </h3>
@@ -681,7 +681,7 @@ const WeatherDashboard = () => {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className={`${cardClasses} rounded-2xl p-8 border`}>
-                <h3 className={`text-2xl font-black mb-6 flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className="text-2xl font-black mb-6 flex items-center text-white">
                   <TrendingUp className="w-7 h-7 mr-3 text-emerald-500" />
                   Prediction Accuracy Trends
                 </h3>
@@ -694,13 +694,13 @@ const WeatherDashboard = () => {
                     { month: 'May', accuracy: 95, confidence: 93 },
                     { month: 'Jun', accuracy: 97, confidence: 95 },
                   ]}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e2e8f0'} />
-                    <XAxis dataKey="month" stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
-                    <YAxis stroke={isDarkMode ? '#9ca3af' : '#64748b'} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="month" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
                     <Tooltip 
                       contentStyle={{
-                        backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                        border: `1px solid ${isDarkMode ? '#374151' : '#e2e8f0'}`,
+                        backgroundColor: '#1e293b',
+                        border: '1px solid #374151',
                         borderRadius: '12px'
                       }}
                     />
@@ -725,14 +725,14 @@ const WeatherDashboard = () => {
                 </ResponsiveContainer>
               </div>
               <div className={`${cardClasses} rounded-2xl p-8 border`}>
-                <h3 className={`text-2xl font-black mb-6 flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className="text-2xl font-black mb-6 flex items-center text-white">
                   <Activity className="w-7 h-7 mr-3 text-blue-500" />
                   Real-time Processing Load
                 </h3>
                 <div className="space-y-6">
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className={`font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Neural Network Load</span>
+                      <span className="font-bold text-slate-300">Neural Network Load</span>
                       <span className="text-blue-500 font-black">67%</span>
                     </div>
                     <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-3">
@@ -743,7 +743,7 @@ const WeatherDashboard = () => {
                   </div>
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className={`font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Data Processing</span>
+                      <span className="font-bold text-slate-300">Data Processing</span>
                       <span className="text-emerald-500 font-black">89%</span>
                     </div>
                     <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-3">
@@ -754,7 +754,7 @@ const WeatherDashboard = () => {
                   </div>
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className={`font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Satellite Sync</span>
+                      <span className="font-bold text-slate-300">Satellite Sync</span>
                       <span className="text-purple-500 font-black">95%</span>
                     </div>
                     <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-3">
@@ -788,7 +788,7 @@ const WeatherDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <div className={`${cardClasses} rounded-2xl p-8 border`}>
-                <h3 className={`text-3xl font-black mb-8 flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className="text-3xl font-black mb-8 flex items-center text-white">
                   <TreePine className="w-8 h-8 mr-3 text-emerald-500" />
                   AI-Powered Crop Intelligence
                 </h3>
@@ -822,7 +822,7 @@ const WeatherDashboard = () => {
                               {advisory.icon}
                             </div>
                             <div>
-                              <h4 className={`text-2xl font-black mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                              <h4 className="text-2xl font-black mb-2 text-white">
                                 {advisory.crop}
                               </h4>
                               <div className="flex items-center space-x-3">
@@ -848,18 +848,18 @@ const WeatherDashboard = () => {
                             {advisory.priority} Priority
                           </div>
                         </div>
-                        <p className={`text-lg leading-relaxed mb-6 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <p className="text-lg leading-relaxed mb-6 text-slate-300">
                           {advisory.advisory}
                         </p>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-6 text-sm">
                             <div className="flex items-center space-x-2">
                               <Calendar className="w-4 h-4 text-slate-500" />
-                              <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Valid for 48 hours</span>
+                              <span className="text-slate-400">Valid for 48 hours</span>
                             </div>
                             <div className="flex items-center space-x-2">
                               <MapPin className="w-4 h-4 text-slate-500" />
-                              <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>{selectedDistrict} region</span>
+                              <span className="text-slate-400">{selectedDistrict} region</span>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -875,7 +875,7 @@ const WeatherDashboard = () => {
                     ))}
                     {advisoryData.length === 0 && !loading && (
                       <div className={`${cardClasses} border rounded-2xl p-8 text-center`}>
-                        <p className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>No advisories available at the moment.</p>
+                        <p className="text-slate-400">No advisories available at the moment.</p>
                       </div>
                     )}
                   </div>
@@ -883,53 +883,9 @@ const WeatherDashboard = () => {
               </div>
             </div>
             <div className="space-y-6">
+
               <div className={`${cardClasses} rounded-2xl p-6 border`}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className={`text-xl font-black flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                    <AlertTriangle className="w-6 h-6 mr-2 text-orange-500" />
-                    Live Alerts
-                  </h3>
-                  <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-black animate-pulse">
-                    2 CRITICAL
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-2xl p-5 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8"></div>
-                    <div className="relative z-10">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <AlertTriangle className="w-5 h-5 animate-pulse" />
-                        <span className="font-black">Severe Weather Alert</span>
-                      </div>
-                      <p className="text-sm text-red-100 mb-4">
-                        Neural models predict 30-35mm rainfall Wednesday. Immediate agricultural action required.
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">⚡ CRITICAL</span>
-                        <span className="text-xs">Valid: 72hrs</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl p-5 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8"></div>
-                    <div className="relative z-10">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <Thermometer className="w-5 h-5" />
-                        <span className="font-black">Heat Stress Warning</span>
-                      </div>
-                      <p className="text-sm text-orange-100 mb-4">
-                        AI predicts peak temperature 39°C Thursday. Crop protection measures advised.
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">⚠️ HIGH</span>
-                        <span className="text-xs">Valid: 48hrs</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className={`${cardClasses} rounded-2xl p-6 border`}>
-                <h3 className={`text-xl font-black mb-6 flex items-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className="text-xl font-black mb-6 flex items-center text-white">
                   <Activity className="w-6 h-6 mr-2 text-cyan-500" />
                   Smart Analytics
                 </h3>
@@ -947,19 +903,7 @@ const WeatherDashboard = () => {
                     </div>
                     <p className="text-xs text-cyan-600 dark:text-cyan-400">↗ +234 this week</p>
                   </div>
-                  <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/30 dark:to-green-900/30 p-5 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-bold text-emerald-700 dark:text-emerald-300">Alerts Sent Today</span>
-                      <div className="flex items-center space-x-2">
-                        <Bell className="w-4 h-4 text-emerald-600" />
-                        <span className="font-black text-emerald-800 dark:text-emerald-200 text-xl">1,789</span>
-                      </div>
-                    </div>
-                    <div className="bg-emerald-200 dark:bg-emerald-800 rounded-full h-2 mb-2">
-                      <div className="bg-gradient-to-r from-emerald-500 to-green-500 h-2 rounded-full w-full"></div>
-                    </div>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400">99.3% delivery rate</p>
-                  </div>
+
                   <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/30 dark:to-violet-900/30 p-5 rounded-xl border border-purple-200 dark:border-purple-800">
                     <div className="flex items-center justify-between mb-3">
                       <span className="font-bold text-purple-700 dark:text-purple-300">Reports Generated</span>
@@ -983,15 +927,6 @@ const WeatherDashboard = () => {
                     Neural Actions
                   </h3>
                   <div className="space-y-3">
-                    <button className="w-full bg-white/20 hover:bg-white/30 rounded-xl p-4 transition-all duration-300 hover:scale-105">
-                      <div className="flex items-center space-x-3">
-                        <Bell className="w-5 h-5" />
-                        <div className="text-left">
-                          <p className="font-bold">Emergency Broadcast</p>
-                          <p className="text-sm text-white/80">AI-powered critical alerts</p>
-                        </div>
-                      </div>
-                    </button>
                     <button className="w-full bg-white/20 hover:bg-white/30 rounded-xl p-4 transition-all duration-300 hover:scale-105">
                       <div className="flex items-center space-x-3">
                         <Download className="w-5 h-5" />
@@ -1026,16 +961,16 @@ const WeatherDashboard = () => {
                 <Brain className="w-6 h-6 text-white relative z-10" />
               </div>
               <div>
-                <p className={`font-black text-lg ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                <p className="font-black text-lg text-white">
                   NeuraWeather AI Platform
                 </p>
-                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                <p className="text-sm text-slate-400">
                   Developed by Rijja H & Rohith Varshighan S
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-6 text-sm">
-              <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>
+              <span className="text-slate-400">
                 Tamil Nadu Agricultural University
               </span>
               <div className="w-2 h-2 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full animate-pulse"></div>
